@@ -1,0 +1,254 @@
+#!/usr/bin/ruby
+
+# whalebuilder - Debian package builder using Docker
+# Copyright (C) 2015 Hubert Chathi <hubert@uhoreg.ca>
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+require 'tmpdir'
+require 'optparse'
+require 'gpgme'
+require 'debian'
+require 'erb'
+require 'fileutils'
+
+SHARE_DIR = "/usr/share/whalebuilder"
+DEFAULT_CONF_FILE = "/etc/whalebuilder.conf"
+
+options = {}
+options[:config] = DEFAULT_CONF_FILE
+global_opt_parser = OptionParser.new do |opts|
+  opts.banner = "Debian package builder using Docker
+Usage: #{opts.program_name} [globalopts] <command> [options]"
+  opts.separator ""
+  opts.separator "Global options:"
+  opts.on "-c", "--config FILE", "configuration file (default: #{DEFAULT_CONF_FILE}) (not used)" do |v|
+    options[:config] = v
+  end
+  opts.separator ""
+  opts.separator "Commands:"
+  opts.separator "    create - create a Docker image"
+  opts.separator "    update - update a Docker image (not implemented)"
+  opts.separator "    build - build a package"
+  opts.separator ""
+  opts.separator "See '#{opts.program_name} <command> --help' for help about a specific command"
+end
+global_opt_parser.order!
+
+if ARGV.length == 0
+  global_opt_parser.abort "Error: no command specified"
+end
+
+command = ARGV.shift
+
+case command
+when 'create'
+  ##############################################################################
+  # Create an image
+  ##############################################################################
+  options[:distribution] = "debian"
+  options[:release] = "stable"
+  options[:maintainer] = "Nobody <nobody@example.com>"
+  options[:debootstrap] = false
+
+  create_opt_parser = OptionParser.new do |opts|
+    opts.banner = "Create a Docker image for building packages
+Usage: #{opts.program_name} [globalopts] create [options] <image name>"
+    opts.separator ""
+    opts.separator "Create options:"
+    opts.on "-d", "--distribution NAME", "distribution name.  This should match a Docker image name (default: debian)" do |v|
+      options[:distribution] = v
+    end
+    opts.on "-r", "--release NAME", "release name.  This should match a tag for the base Docker image (default: stable)" do |v|
+      options[:release] = v
+    end
+    opts.on "--maintainer NAME", "maintainer (default: Nobody <nobody@example.com>)" do |v|
+      options[:maintainer] = v
+    end
+    opts.on "--[no-]debootstrap", "use debootstrap to build image, rather than Docker's base Debian image (not implemented)" do |v|
+      options[:debootstrap] = v
+    end
+  end
+
+  create_opt_parser.parse! ARGV
+
+  if ARGV.length == 0
+    global_opt_parser.abort "Error: image name not specified"
+  end
+
+  if ARGV.length > 1
+    global_opt_parser.abort "Error: extra arguments found"
+  end
+
+  Dir.mktmpdir do |dir|
+    class Dockerfile
+      def initialize (options)
+        @distribution = options[:distribution]
+        @tag = options[:release]
+        @maintainer = options[:maintainer]
+      end
+      def write (filename)
+        b = binding
+        result = ERB.new(File.read(File.join(SHARE_DIR, "Dockerfile.base.erb"))).result b
+        File.open(filename, "w") do |file|
+          file.write result
+        end
+      end
+    end
+    Dockerfile.new(options).write(File.join(dir, "Dockerfile"))
+    system "/usr/bin/sudo", "docker", "build", "--tag=#{ARGV[0]}", "--pull=true", dir
+  end
+
+when 'build'
+  ##############################################################################
+  # Build a package
+  ##############################################################################
+  options[:results] = "~/.local/share/whalebuilder"
+  options[:install_depends] = true
+  options[:remove] = false
+  build_opt_parser = OptionParser.new do |opts|
+    opts.banner = "Build a package
+Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>"
+    opts.separator ""
+    opts.separator "Build options:"
+    opts.on "--results DIR", "directory to store the results (default: ~/.local/share/whalebuilder)" do |v|
+      options[:results] = v
+    end
+    opts.on "--[no-]install-depends", "install dependencies (default: true)" do |v|
+      options[:install_depends] = v
+    end
+    opts.on "--[no-]rm", "remove dependency image (default: false)" do |v|
+      options[:remove] = v
+    end
+  end
+
+  build_opt_parser.parse! ARGV
+
+  if ARGV.length == 0
+    global_opt_parser.abort "Error: image name and dsc not specified"
+  end
+
+  if ARGV.length == 1
+    global_opt_parser.abort "Error: dsc not specified"
+  end
+
+  if ARGV.length > 2
+    global_opt_parser.abort "Error: extra arguments found"
+  end
+
+  name = ARGV.shift
+  dsc = ARGV.shift
+  dscdir = File.dirname dsc
+
+  options[:results] = File.expand_path options[:results]
+  FileUtils.mkdir_p options[:results]
+
+  Dir.mktmpdir do |dir|
+    # parse dsc file
+    dsccontents = File.read(dsc)
+    if (dsccontents.start_with? "-----BEGIN PGP SIGNED MESSAGE-----\n")
+      crypto = GPGME::Crypto.new
+      signature = GPGME::Data.new dsccontents
+      sigout = GPGME::Data.new
+      crypto.verify(signature, :output => sigout) do |sig|
+        abort sig.to_s if !sig.valid?
+      end
+
+      dsccontents = sigout.to_s
+    end
+
+    dscfile = Debian::Dsc.new(dsccontents)
+
+    # create image with build dependencies installed
+    if options[:install_depends]
+      # use equivs to build a package that depends on the build dependencies
+      class EquivControl
+        def initialize (dsc)
+          @dsc = dsc
+        end
+        def write (filename)
+          b = binding
+          result = ERB.new(File.read(File.join(SHARE_DIR, "whalebuilder-dependency-helper.ctl.erb"))).result b
+          File.open(filename, "w") do |file|
+            file.write result
+          end
+        end
+      end
+      EquivControl.new(dscfile).write(File.join(dir, "whalebuilder-dependency-helper.ctl"))
+      Dir.chdir(dir) do
+        system "/usr/bin/equivs-build", "whalebuilder-dependency-helper.ctl"
+        File.unlink "whalebuilder-dependency-helper.ctl"
+      end
+
+      # create the image
+      newname = "whalebuilder_build/#{dscfile.package}:#{dscfile.version}"
+
+      class Dockerfile
+        def initialize (basename)
+          @basename = basename
+        end
+        def write (filename)
+          b = binding
+          result = ERB.new(File.read(File.join(SHARE_DIR, "Dockerfile.build.erb"))).result b
+          File.open(filename, "w") do |file|
+            file.write result
+          end
+        end
+      end
+      Dockerfile.new(name).write(File.join(dir, "Dockerfile"))
+      system "ls", dir
+      system "/usr/bin/sudo", "docker", "build", "--tag=#{newname}", dir
+
+      name = newname
+    end
+
+    # copy source files
+    FileUtils.mkdir File.join(dir, "source")
+    files = dscfile["Files"].split("\n")
+    files.map! do |x| x.length != 0 && File.join(dscdir, x.split()[2]) end
+    files[0] = dsc
+    FileUtils.cp files, File.join(dir, "source")
+
+    # create script to build the package
+    class BuildScript
+      def initialize (dscfilename, dscfile)
+        @dscfilename = File.basename dscfilename
+        @builddir = "#{dscfile.package}_#{dscfile.version}"
+      end
+      def write (filename)
+        b = binding
+        result = ERB.new(File.read(File.join(SHARE_DIR, "build.sh.erb"))).result b
+        File.open(filename, "w") do |file|
+          file.write result
+        end
+      end
+    end
+    BuildScript.new(dsc, dscfile).write(File.join(dir, "source", "build.sh"))
+    File.chmod 0755, File.join(dir, "source", "build.sh")
+
+    containername = "whalebuilder_build_#{dscfile.package}_#{dscfile.version}"
+    # build the package
+    system "/usr/bin/sudo", "docker", "run", "--user=whalebuilder", "--name=#{containername}", "-v", "#{dir}/source:/home/whalebuilder/source:ro", "--net=none", name, "/bin/sh", "./source/build.sh"
+    system "/usr/bin/sudo", "docker", "cp", "#{containername}:/home/whalebuilder/#{dscfile.package}_#{dscfile.version}", options[:results]
+    system "/usr/bin/sudo", "docker", "rm", containername
+
+    # remove build dependency image if requested, and only if we created it in
+    # the first place
+    if options[:remove] && options[:install_depends]
+      system "/usr/bin/sudo", "docker", "rm", name
+    end
+  end
+else
+  global_opt_parser.abort "Error: unknown command #{command}"
+end

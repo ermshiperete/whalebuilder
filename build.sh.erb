@@ -1,0 +1,2 @@
+#!/bin/sh
+mkdir -p <%= @builddir %> && cd <%= @builddir %> && dpkg-source -x ../source/<%= @dscfilename %> builddir && cd builddir && dpkg-buildpackage -uc -us 2>&1 | tee ../<%= @builddir %>_`dpkg-architecture -qDEB_BUILD_ARCH`.build && cd .. && rm -rf builddir

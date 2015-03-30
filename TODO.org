@@ -1,0 +1,23 @@
+* fix permissions for build results
+Build results are owned by the whalebuilder user within the Docker container.
+It should instead by owned by the user who called Whalebuilder.
+
+* share /var/cache/apt/archives
+Docker's Debian images automatically clear out /var/cache/apt/archives, which
+means that it can't be shared easily.  We also don't want it to be copied into
+the images, as this would take up a large amount of space.  The best solution
+might be to instead use a local apt cache.
+
+* allow passing options to Docker and dpkg-buildpackage
+
+* add progress information
+
+* hide output from equivs-build
+
+* don't use sudo if user can run docker directly
+
+* allow base image to be built by debootstrap
+
+* allow default options to be specified in config file
+
+* allow build dependency image name to be specified

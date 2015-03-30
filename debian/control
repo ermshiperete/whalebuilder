@@ -1,0 +1,14 @@
+Source: whalebuilder
+Section: devel
+Priority: extra
+Maintainer: Hubert Chathi <uhoreg@debian.org>
+Build-Depends: debhelper (>= 9)
+Standards-Version: 3.7.3
+Homepage: http://www.uhoreg.ca/programming/debian/whalebuilder
+
+Package: whalebuilder
+Architecture: all
+Depends: ${shlibs:Depends}, ruby, ruby-gpgme, ruby-debian, docker.io, equivs, sudo
+Description: Debian package builder using Docker
+ Whalebuilder is a tool for building Debian packages in a minimal environment.
+ It is inspired by pbuilder, but uses Docker to manage the build environment.

@@ -1,0 +1,2 @@
+*.erb /usr/share/whalebuilder
+whalebuilder /usr/bin

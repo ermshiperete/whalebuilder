@@ -207,7 +207,6 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
         end
       end
       Dockerfile.new(name).write(File.join(dir, "Dockerfile"))
-      system "ls", dir
       system "/usr/bin/sudo", "docker", "build", "--tag=#{newname}", dir
 
       name = newname

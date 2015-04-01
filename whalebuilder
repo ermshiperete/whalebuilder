@@ -187,7 +187,7 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
       end
       EquivControl.new(dscfile).write(File.join(dir, "whalebuilder-dependency-helper.ctl"))
       Dir.chdir(dir) do
-        system "/usr/bin/equivs-build", "whalebuilder-dependency-helper.ctl"
+        system "/usr/bin/equivs-build", "whalebuilder-dependency-helper.ctl", [:out, :err] => ["/dev/null", "w"]
         File.unlink "whalebuilder-dependency-helper.ctl"
       end
 

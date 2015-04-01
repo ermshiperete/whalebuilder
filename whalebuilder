@@ -240,7 +240,7 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
     # remove build dependency image if requested, and only if we created it in
     # the first place
     if options[:remove] && options[:install_depends]
-      docker "rm", name
+      docker "rmi", name
     end
   end
 else

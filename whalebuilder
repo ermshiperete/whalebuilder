@@ -26,6 +26,18 @@ require 'fileutils'
 SHARE_DIR = "/usr/share/whalebuilder"
 DEFAULT_CONF_FILE = "/etc/whalebuilder.conf"
 
+# common class for templated files
+class Templater
+  def write (filename)
+    b = binding
+    result = ERB.new(File.read(File.join(SHARE_DIR, self.class::TEMPLATE_FILE))).result b
+    File.open(filename, "w") do |file|
+      file.write result
+    end
+  end
+end
+
+#global options
 options = {}
 options[:config] = DEFAULT_CONF_FILE
 global_opt_parser = OptionParser.new do |opts|
@@ -92,18 +104,12 @@ Usage: #{opts.program_name} [globalopts] create [options] <image name>"
   end
 
   Dir.mktmpdir do |dir|
-    class Dockerfile
+    class Dockerfile < Templater
+      TEMPLATE_FILE = "Dockerfile.base.erb"
       def initialize (options)
         @distribution = options[:distribution]
         @tag = options[:release]
         @maintainer = options[:maintainer]
-      end
-      def write (filename)
-        b = binding
-        result = ERB.new(File.read(File.join(SHARE_DIR, "Dockerfile.base.erb"))).result b
-        File.open(filename, "w") do |file|
-          file.write result
-        end
       end
     end
     Dockerfile.new(options).write(File.join(dir, "Dockerfile"))
@@ -117,6 +123,7 @@ when 'build'
   options[:results] = "~/.local/share/whalebuilder"
   options[:install_depends] = true
   options[:remove] = false
+
   build_opt_parser = OptionParser.new do |opts|
     opts.banner = "Build a package
 Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>"
@@ -173,16 +180,10 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
     # create image with build dependencies installed
     if options[:install_depends]
       # use equivs to build a package that depends on the build dependencies
-      class EquivControl
+      class EquivControl < Templater
+        TEMPLATE_FILE = "whalebuilder-dependency-helper.ctl.erb"
         def initialize (dsc)
           @dsc = dsc
-        end
-        def write (filename)
-          b = binding
-          result = ERB.new(File.read(File.join(SHARE_DIR, "whalebuilder-dependency-helper.ctl.erb"))).result b
-          File.open(filename, "w") do |file|
-            file.write result
-          end
         end
       end
       EquivControl.new(dscfile).write(File.join(dir, "whalebuilder-dependency-helper.ctl"))
@@ -194,16 +195,10 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
       # create the image
       newname = "whalebuilder_build/#{dscfile.package}:#{dscfile.version}"
 
-      class Dockerfile
+      class Dockerfile < Templater
+        TEMPLATE_FILE = "Dockerfile.build.erb"
         def initialize (basename)
           @basename = basename
-        end
-        def write (filename)
-          b = binding
-          result = ERB.new(File.read(File.join(SHARE_DIR, "Dockerfile.build.erb"))).result b
-          File.open(filename, "w") do |file|
-            file.write result
-          end
         end
       end
       Dockerfile.new(name).write(File.join(dir, "Dockerfile"))
@@ -220,17 +215,11 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
     FileUtils.cp files, File.join(dir, "source")
 
     # create script to build the package
-    class BuildScript
+    class BuildScript < Templater
+      TEMPLATE_FILE = "build.sh.erb"
       def initialize (dscfilename, dscfile)
         @dscfilename = File.basename dscfilename
         @builddir = "#{dscfile.package}_#{dscfile.version}"
-      end
-      def write (filename)
-        b = binding
-        result = ERB.new(File.read(File.join(SHARE_DIR, "build.sh.erb"))).result b
-        File.open(filename, "w") do |file|
-          file.write result
-        end
       end
     end
     BuildScript.new(dsc, dscfile).write(File.join(dir, "source", "build.sh"))
@@ -249,5 +238,8 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
     end
   end
 else
+  ##############################################################################
+  # everything else
+  ##############################################################################
   global_opt_parser.abort "Error: unknown command #{command}"
 end

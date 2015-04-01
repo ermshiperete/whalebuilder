@@ -13,8 +13,8 @@ external resources.
 Usage
 -----
 
-To use Whalebuilder, you must first create a base image by using "`whalebuilder
-create`".  For example,
+To use Whalebuilder, you must first create a base image by using
+"`whalebuilder create`".  For example,
 
     $ whalebuilder create whalebuilder/debian:stable
 

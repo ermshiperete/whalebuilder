@@ -37,6 +37,12 @@ class Templater
   end
 end
 
+# helper function for calling docker
+def docker (*args)
+  args = ["/usr/bin/sudo", "docker"] + args
+  system(*args)
+end
+
 #global options
 options = {}
 options[:config] = DEFAULT_CONF_FILE
@@ -113,7 +119,7 @@ Usage: #{opts.program_name} [globalopts] create [options] <image name>"
       end
     end
     Dockerfile.new(options).write(File.join(dir, "Dockerfile"))
-    system "/usr/bin/sudo", "docker", "build", "--tag=#{ARGV[0]}", "--pull=true", dir
+    docker "build", "--tag=#{ARGV[0]}", "--pull=true", dir
   end
 
 when 'build'
@@ -202,7 +208,7 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
         end
       end
       Dockerfile.new(name).write(File.join(dir, "Dockerfile"))
-      system "/usr/bin/sudo", "docker", "build", "--tag=#{newname}", dir
+      docker "build", "--tag=#{newname}", dir
 
       name = newname
     end
@@ -227,14 +233,14 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
 
     containername = "whalebuilder_build_#{dscfile.package}_#{dscfile.version}"
     # build the package
-    system "/usr/bin/sudo", "docker", "run", "--user=whalebuilder", "--name=#{containername}", "-v", "#{dir}/source:/home/whalebuilder/source:ro", "--net=none", name, "/bin/sh", "./source/build.sh"
-    system "/usr/bin/sudo", "docker", "cp", "#{containername}:/home/whalebuilder/#{dscfile.package}_#{dscfile.version}", options[:results]
-    system "/usr/bin/sudo", "docker", "rm", containername
+    docker "run", "--user=whalebuilder", "--name=#{containername}", "-v", "#{dir}/source:/home/whalebuilder/source:ro", "--net=none", name, "/bin/sh", "./source/build.sh"
+    docker "cp", "#{containername}:/home/whalebuilder/#{dscfile.package}_#{dscfile.version}", options[:results]
+    docker "rm", containername
 
     # remove build dependency image if requested, and only if we created it in
     # the first place
     if options[:remove] && options[:install_depends]
-      system "/usr/bin/sudo", "docker", "rm", name
+      docker "rm", name
     end
   end
 else

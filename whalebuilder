@@ -235,6 +235,7 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
     # build the package
     docker "run", "--user=whalebuilder", "--name=#{containername}", "-v", "#{dir}/source:/home/whalebuilder/source:ro", "--net=none", name, "/bin/sh", "./source/build.sh"
     docker "cp", "#{containername}:/home/whalebuilder/#{dscfile.package}_#{dscfile.version}", options[:results]
+    docker "diff", containername # FIXME: filter out expected changes
     docker "rm", containername
 
     # remove build dependency image if requested, and only if we created it in

@@ -4,11 +4,17 @@ Whalebuilder
 Whalebuilder is a tool for building Debian packages in a minimal environment.
 It is inspired by pbuilder, but uses Docker to manage the build environment.
 
-One advantage of using Whalebuilder is that it creates a Docker image with all
-the build dependencies for your package installed, allowing you to quickly
-rebuild if needed.  Whalebuilder will also build your package with networking
-disabled, to ensure that your build process does not inadvertently rely on any
-external resources.
+Whalebuilder builds packages:
+
+* with only `build-essential` and the package's build dependencies installed;
+* as a non-priviledged user;
+* with networking disabled, to ensure that the build process does not
+  inadvertently rely on any external resources; and
+* without any system daemons running (this may cause problems with some
+  packages, but should be fine for the majority of packages).
+
+In addition, Whalebuilder will print a warning if it detects that the build has
+made any changes to the filesystem outside of the build directory.
 
 Usage
 -----

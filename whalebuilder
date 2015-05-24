@@ -267,6 +267,10 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
       docker "rmi", name, :out => "/dev/null"
     end
   end
+when 'moo'
+  require "base64"
+  require "zlib"
+  puts Zlib::Inflate.inflate(Base64.decode64("eJx9T8ENgCAM/DNFw0cNFDdwA+MCJLqBC3R424KAUWwftPR6vTPQDYfO9KcEpNP9jnZPMjWBQX4osyPUdc1URwOjlut56js1RJmMseRR+I5Qj9KDLTNG/Vye6iMJIzakiNayNLTD2yd9WJ7fsCgiPGz/qCyohMePi+wLizFBXHlbRg0="))
 else
   ##############################################################################
   # everything else

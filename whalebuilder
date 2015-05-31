@@ -190,6 +190,8 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
     end
 
     dscfile = Debian::Dsc.new(dsccontents)
+    escaped_package = dscfile.package.gsub(/[^A-Za-z0-9.-]/) {|s| "_" + s.ord.to_s(16) }
+    escaped_version = dscfile.version.gsub(/[^A-Za-z0-9.-]/) {|s| "_" + s.ord.to_s(16) }
 
     # create image with build dependencies installed
     if options[:install_depends]
@@ -208,8 +210,7 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
       end
 
       # create the image
-      escaped_version = dscfile.version.gsub(/[^A-Za-z0-9.-]/) {|s| "_" + s.ord.to_s(16) }
-      newname = "whalebuilder_build/#{dscfile.package}:#{escaped_version}"
+      newname = "whalebuilder_build/#{escaped_package}:#{escaped_version}"
 
       class Dockerfile < Templater
         TEMPLATE_FILE = "Dockerfile.build.erb"
@@ -242,7 +243,7 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
     File.chmod 0755, File.join(dir, "source", "build.sh")
 
     puts "[whalebuilder] building package"
-    containername = "whalebuilder_build_#{dscfile.package}_#{dscfile.version}"
+    containername = "whalebuilder_build_#{escaped_package}_#{escaped_version}"
     # build the package
     docker "run", "--user=whalebuilder", "--name=#{containername}", "-v", "#{dir}/source:/home/whalebuilder/source:ro", "--net=none", name, "/bin/sh", "./source/build.sh"
     docker "cp", "#{containername}:/home/whalebuilder/#{dscfile.package}_#{dscfile.version}", options[:results]

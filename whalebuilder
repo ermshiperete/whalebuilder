@@ -255,7 +255,7 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
           || x == "C /tmp" \
           || x.start_with?("A /home/whalebuilder/#{dscfile.package}_#{dscfile.version}"))
       end
-      if out.length
+      if out.length != 0
         warn "[whalebuilder] W: detected filesystem changes outside of build tree:"
         warn out
       end

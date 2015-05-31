@@ -208,7 +208,8 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
       end
 
       # create the image
-      newname = "whalebuilder_build/#{dscfile.package}:#{dscfile.version}"
+      escaped_version = dscfile.version.gsub(/[^A-Za-z0-9.-]/) {|s| "_" + s.ord.to_s(16) }
+      newname = "whalebuilder_build/#{dscfile.package}:#{escaped_version}"
 
       class Dockerfile < Templater
         TEMPLATE_FILE = "Dockerfile.build.erb"

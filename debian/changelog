@@ -1,3 +1,12 @@
+whalebuilder (0.2) unstable; urgency=low
+
+  * New release
+    * warn on unexpected filesystem changes
+    * allow changing apt repository
+    * other bug fixes and improvements
+
+ -- Hubert Chathi <uhoreg@debian.org>  Tue, 09 Jun 2015 10:33:51 -0400
+
 whalebuilder (0.1) unstable; urgency=low
 
   * initial version

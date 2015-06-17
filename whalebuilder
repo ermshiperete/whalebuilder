@@ -81,8 +81,11 @@ when 'create'
   options[:distribution] = "debian"
   options[:release] = "stable"
   options[:repository] = nil
-  options[:maintainer] = "Nobody <nobody@example.com>"
   options[:debootstrap] = false
+
+  deb_email = ENV["DEBEMAIL"] || "nobody@example.com"
+  deb_name = ENV["DEBFULLNAME"] || "Nobody"
+  options[:maintainer] = "#{deb_name} <#{deb_email}>"
 
   create_opt_parser = OptionParser.new do |opts|
     opts.banner = "Create a Docker image for building packages
@@ -98,7 +101,7 @@ Usage: #{opts.program_name} [globalopts] create [options] <image name>"
     opts.on "--repository URL", "apt repository to use (default: http://httpredir.debian.org/debian)" do |v|
       options[:repository] = v
     end
-    opts.on "--maintainer NAME", "maintainer (default: Nobody <nobody@example.com>)" do |v|
+    opts.on "--maintainer NAME", "maintainer (default: Nobody <nobody@example.com> or values set by DEBFULLNAME and DEBEMAIL environment variables.)" do |v|
       options[:maintainer] = v
     end
     opts.on "--[no-]debootstrap", "use debootstrap to build image, rather than Docker's base Debian image (not implemented)" do |v|

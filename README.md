@@ -56,6 +56,8 @@ a Debian stable build environment, based of Docker's debian image, and
 will create a Docker image named `whalebuilder_debian:sid` that will contain a
 Debian unstable build environment.
 
+For more information, see `whalebuilder --help`.
+
 License
 -------
 Copyright (C) 2015 Hubert Chathi <hubert@uhoreg.ca>

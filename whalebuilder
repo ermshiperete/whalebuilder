@@ -107,6 +107,8 @@ Usage: #{opts.program_name} [globalopts] create [options] <image name>"
     opts.on "--[no-]debootstrap", "use debootstrap to build image, rather than Docker's base Debian image (not implemented)" do |v|
       options[:debootstrap] = v
     end
+    opts.separator ""
+    opts.separator "Hint: You may wish to use a pre-built image, such as uhoreg/whalebuilder-base:* (see https://registry.hub.docker.com/u/uhoreg/whalebuilder-base/) rather than building your own."
   end
 
   create_opt_parser.parse! ARGV
@@ -138,6 +140,7 @@ when 'build'
   # Build a package
   ##############################################################################
   options[:results] = "~/.local/share/whalebuilder"
+  options[:pull] = false
   options[:install_depends] = true
   options[:remove] = false
 
@@ -148,6 +151,12 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
     opts.separator "Build options:"
     opts.on "--results DIR", "directory to store the results (default: ~/.local/share/whalebuilder)" do |v|
       options[:results] = v
+    end
+    opts.on "--[no-]rm", "remove dependency image (default: false)" do |v|
+      options[:remove] = v
+    end
+    opts.on "--[no-]pull", "pull latest version of image (default: false)" do |v|
+      options[:pull] = v
     end
     opts.on "--[no-]install-depends", "install dependencies (default: true)" do |v|
       options[:install_depends] = v
@@ -222,7 +231,7 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
         end
       end
       Dockerfile.new(name).write(File.join(dir, "Dockerfile"))
-      docker "build", "--tag=#{newname}", dir
+      docker "build", (options[:pull] ? "--pull=true" : "--pull=false"), "--tag=#{newname}", dir
 
       name = newname
     end

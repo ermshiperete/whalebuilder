@@ -19,36 +19,42 @@ made any changes to the filesystem outside of the build directory.
 Usage
 -----
 
-To use Whalebuilder, you must first create a base image by using
-"`whalebuilder create`".  For example,
-
-    $ whalebuilder create whalebuilder/debian:stable
-
-will create a Docker image named `whalebuilder/debian:stable` that will contain
-a Debian stable build environment, and
-
-    $ whalebuilder create -r unstable whalebuilder/debian:sid
-
-will create a Docker image named `whalebuilder/debian:sid` what will contain a
-Debian unstable build environment.  Note that for all Whalebuilder commands,
-you must have `sudo` access to Docker.
-
-After creating an image, you can build a package using "`whalebuilder build`".
+To build a package, use the command "`whalebuilder build`".
 For example,
 
-    $ whalebuilder build whalebuilder/debian:sid foo_0.1-1.dsc
+    $ whalebuilder build --pull uhoreg/whalebuilder-base:sid foo_0.1-1.dsc
 
-will build the source package described in foo_0.1-1.dsc.  The resulting
-packages will be saved by default in `~/.local/share/whalebuilder/foo_0.1-1`.
-Note that the results will not be owned by your user, although you can still
-read it.  However, to delete the results, you will need to use `sudo`.
+will build the source package described in foo_0.1-1.dsc, using the public
+image `uhoreg/whalebuilder-base:sid` as the base image.  The `--pull` option
+ensures that it pulls the latest version of the base image.  The resulting
+packages and build information will be saved by default in
+`~/.local/share/whalebuilder/foo_0.1-1`.
+
+Note: the results will not be owned by your user, although you can still read
+it.  However, to delete the results, you will need to use `sudo`.
+
+Note: for all Whalebuilder commands, you must have `sudo` access to Docker.
 
 After you have built a package in this way, there will be a Docker image named
-`whalebuilder_build/<pkgname>:<pkgversion>`,
-e.g. `whalebuilder_build/foo:0.1-1`.  You can use this to rebuild the package
-without needing to reinstall the build dependencies.  For example,
+`whalebuilder_build/<pkgname>:<pkgversion>` (with some escaping done to ensure
+it's a valid Docker image name), e.g. `whalebuilder_build/foo:0.1-1`.  You can
+use this to rebuild the package without needing to reinstall the build
+dependencies.  For example,
 
     $ whalebuilder build --no-install-depends whalebuilder_build/foo:0.1-1 foo_0.1-1.dsc
+
+If you do not wish to use a pre-built base image, you can create your own base
+image by using "`whalebuilder create`".  For example,
+
+    $ whalebuilder create whalebuilder_debian:stable
+
+will create a Docker image named `whalebuilder_debian:stable` that will contain
+a Debian stable build environment, based of Docker's debian image, and
+
+    $ whalebuilder create -r unstable whalebuilder_debian:sid
+
+will create a Docker image named `whalebuilder_debian:sid` that will contain a
+Debian unstable build environment.
 
 License
 -------

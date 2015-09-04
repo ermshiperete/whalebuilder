@@ -22,6 +22,8 @@ require 'gpgme'
 require 'debian'
 require 'erb'
 require 'fileutils'
+require 'etc'
+require 'socket'
 
 SHARE_DIR = "/usr/share/whalebuilder"
 DEFAULT_CONF_FILE = "/etc/whalebuilder.conf"
@@ -83,8 +85,19 @@ when 'create'
   options[:repository] = nil
   options[:debootstrap] = false
 
-  deb_email = ENV["DEBEMAIL"] || "nobody@example.com"
-  deb_name = ENV["DEBFULLNAME"] || "Nobody"
+  def guess_mailname
+    File.open('/etc/mailname', 'r').read.strip rescue nil ||
+    Socket.gethostbyname(Socket.gethostname).first rescue nil ||
+    `uname -n`.strip
+  end
+
+  deb_email = ENV["DEBEMAIL"] ||
+              ENV["EMAIL"] ||
+              "#{Etc.getlogin}@#{guess_mailname}"
+  deb_name = ENV["DEBFULLNAME"] ||
+             ENV["NAME"] ||
+             Etc.getpwuid.gecos.split(',').first rescue nil ||
+             "Nobody"
   options[:maintainer] = "#{deb_name} <#{deb_email}>"
 
   create_opt_parser = OptionParser.new do |opts|
@@ -101,7 +114,7 @@ Usage: #{opts.program_name} [globalopts] create [options] <image name>"
     opts.on "--repository URL", "apt repository to use (default: http://httpredir.debian.org/debian)" do |v|
       options[:repository] = v
     end
-    opts.on "--maintainer NAME", "maintainer (default: Nobody <nobody@example.com> or values set by DEBFULLNAME and DEBEMAIL environment variables.)" do |v|
+    opts.on "--maintainer NAME", "maintainer name and address (default: uses DEBEMAIL/DEBFULLNAME or try to guess from login and hostname)" do |v|
       options[:maintainer] = v
     end
     opts.on "--[no-]debootstrap", "use debootstrap to build image, rather than Docker's base Debian image (not implemented)" do |v|

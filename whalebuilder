@@ -40,7 +40,12 @@ class Templater
 end
 
 def make_docker_command (*args)
-  ["/usr/bin/sudo", "docker"] + args
+  socket = ENV["DOCKER_HOST"] || "unix:///var/run/docker.sock"
+  if socket.slice! "unix://" and not File.stat(socket).writable?
+    ["sudo", "docker"] + args
+  else
+    ["docker"] + args
+  end
 end
 
 # helper function for calling docker

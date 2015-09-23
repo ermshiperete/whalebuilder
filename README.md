@@ -46,15 +46,16 @@ dependencies.  For example,
 If you do not wish to use a pre-built base image, you can create your own base
 image by using "`whalebuilder create`".  For example,
 
-    $ whalebuilder create whalebuilder_debian:stable
+    $ whalebuilder create whalebuilder_debian:sid
 
-will create a Docker image named `whalebuilder_debian:stable` that will contain
-a Debian stable build environment, based of Docker's debian image, and
+will create a Docker image named `whalebuilder_debian:sid` that will contain
+a Debian sid build environment, based off Docker's debian image, and
 
-    $ whalebuilder create -r unstable whalebuilder_debian:sid
+    $ whalebuilder create -r testing whalebuilder_debian:testing
 
-will create a Docker image named `whalebuilder_debian:sid` that will contain a
-Debian unstable build environment.
+will create a Docker image named `whalebuilder_debian:testing` that will
+contain a Debian testing build environment (e.g. for building a bugfix package
+during a release freeze).
 
 For more information, see `whalebuilder --help`.
 

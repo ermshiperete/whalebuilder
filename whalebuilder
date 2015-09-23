@@ -79,7 +79,7 @@ when 'create'
   # Create an image
   ##############################################################################
   options[:distribution] = "debian"
-  options[:release] = "stable"
+  options[:release] = "sid"
   options[:repository] = nil
   options[:debootstrap] = false
 
@@ -95,7 +95,7 @@ Usage: #{opts.program_name} [globalopts] create [options] <image name>"
     opts.on "-d", "--distribution NAME", "distribution name.  This should match a Docker image name (default: debian)" do |v|
       options[:distribution] = v
     end
-    opts.on "-r", "--release NAME", "release name.  This should match a tag for the base Docker image (default: stable)" do |v|
+    opts.on "-r", "--release NAME", "release name.  This should match a tag for the base Docker image (default: sid)" do |v|
       options[:release] = v
     end
     opts.on "--repository URL", "apt repository to use (default: http://httpredir.debian.org/debian)" do |v|

@@ -1,3 +1,15 @@
+whalebuilder (0.3) unstable; urgency=low
+
+  * New release
+    * add information on prebuild base images
+    * incorporate suggestions and patches from jmtd, bernat, and jpleau
+      * use --no-install-recommends
+      * default to building on sid
+      * more educated guess for name and email
+      * only use sudo when needed
+
+ -- Hubert Chathi <uhoreg@debian.org>  Wed, 23 Sep 2015 10:56:33 -0400
+
 whalebuilder (0.2) unstable; urgency=low
 
   * New release

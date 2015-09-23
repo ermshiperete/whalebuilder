@@ -6,4 +6,4 @@ WORKDIR /home/whalebuilder
 
 <% if @repository %>RUN sed -i "s/http:\\/\\/http\\(redir.debian.org\\|.debian.net\\)\\/debian/<%= @repository.gsub(/\//, "\\\\\\\\/") %>/" /etc/apt/sources.list
 
-<% end %>RUN apt-get update && apt-get install -y build-essential
+<% end %>RUN apt-get update && apt-get install -y --no-install-recommends build-essential

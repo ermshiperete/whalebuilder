@@ -3,4 +3,4 @@ FROM <%= @basename %>
 COPY whalebuilder-dependency-helper_1.0_all.deb /home/whalebuilder/whalebuilder-dependency-helper_1.0_all.deb
 
 RUN dpkg -i --force-depends --force-conflicts whalebuilder-dependency-helper_1.0_all.deb && rm whalebuilder-dependency-helper_1.0_all.deb
-RUN apt-get update && apt-get install -f -y
+RUN apt-get update && apt-get install -f -y --no-install-recommends

@@ -8,7 +8,8 @@ Homepage: http://www.uhoreg.ca/programming/debian/whalebuilder
 
 Package: whalebuilder
 Architecture: all
-Depends: ${shlibs:Depends}, ruby, ruby-gpgme, ruby-debian, docker.io, equivs, sudo
+Depends: ${shlibs:Depends}, ruby, ruby-gpgme, ruby-debian, docker.io, sudo
+Recommends: strip-nondeterminism
 Description: Debian package builder using Docker
  Whalebuilder is a tool for building Debian packages in a minimal environment.
  It is inspired by pbuilder, but uses Docker to manage the build environment.

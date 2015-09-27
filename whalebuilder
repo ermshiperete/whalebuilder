@@ -225,18 +225,33 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
 
     # create image with build dependencies installed
     if options[:install_depends]
-      puts "[whalebuilder] Building Docker image with build dependencies"
-      # use equivs to build a package that depends on the build dependencies
+      puts "[whalebuilder] building Docker image with build dependencies"
+      # build a package that depends on the build dependencies
       class EquivControl < Templater
         TEMPLATE_FILE = "whalebuilder-dependency-helper.ctl.erb"
         def initialize (dsc)
           @dsc = dsc
         end
       end
-      EquivControl.new(dscfile).write(File.join(dir, "whalebuilder-dependency-helper.ctl"))
+      Dir.mkdir(File.join(dir, "whalebuilder-dependency-helper"))
+      Dir.mkdir(File.join(dir, "whalebuilder-dependency-helper", "DEBIAN"))
+      EquivControl.new(dscfile).write(File.join(dir, "whalebuilder-dependency-helper", "DEBIAN", "control"))
+      system "touch", "-d", "Sun Sep 27 16:03:31 UTC 2015",
+             File.join(dir, "whalebuilder-dependency-helper")
+      system "touch", "-d", "Sun Sep 27 16:03:31 UTC 2015",
+             File.join(dir, "whalebuilder-dependency-helper", "DEBIAN")
+      system "touch", "-d", "Sun Sep 27 16:03:31 UTC 2015",
+             File.join(dir, "whalebuilder-dependency-helper", "DEBIAN", "control")
       Dir.chdir(dir) do
-        system "/usr/bin/equivs-build", "whalebuilder-dependency-helper.ctl", [:out, :err] => ["/dev/null", "w"]
-        File.unlink "whalebuilder-dependency-helper.ctl"
+        system "dpkg-deb", "-b", "whalebuilder-dependency-helper",
+               "whalebuilder-dependency-helper_1.0_all.deb",
+               :out => ["/dev/null", "w"] or
+          abort "[whalebuilder] E: unable to build dependency package (#{$?})"
+        system "strip-nondeterminism", "-t", "ar", "-T", "0", "whalebuilder-dependency-helper_1.0_all.deb",
+               :out => ["/dev/null", "w"] or
+          warn "[whalebuilder] W: unable to strip non determinism from deb package (#{$?})"
+        system "touch", "-d", "Sun Sep 27 16:03:31 UTC 2015",
+               "whalebuilder-dependency-helper_1.0_all.deb"
       end
 
       # create the image

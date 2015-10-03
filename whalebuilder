@@ -259,6 +259,7 @@ when 'build'
   options[:pull] = false
   options[:install_depends] = true
   options[:remove] = false
+  options[:hooks] = []
 
   build_opt_parser = OptionParser.new do |opts|
     opts.banner = "Build a package
@@ -279,6 +280,9 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
     end
     opts.on "--[no-]rm", "remove dependency image (default: false)" do |v|
       options[:remove] = v
+    end
+    opts.on "--hook HOOK", "add an additional Dockerfile instruction inserted after unpacking base image" do |v|
+      options[:hooks] << v
     end
   end
 
@@ -359,16 +363,17 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
       # build a package that depends on the build dependencies
       class EquivControl < Templater
         TEMPLATE_FILE = "whalebuilder-dependency-helper.ctl.erb"
-        def initialize (dsc, depends, conflicts)
+        def initialize (dsc, depends, conflicts, options)
           @arch = `dpkg-architecture -qDEB_HOST_ARCH`.chomp
           @dsc = dsc
           @depends = depends
           @conflicts = conflicts
+          @hooks = options[:hooks]
         end
       end
       Dir.mkdir(File.join(dir, "whalebuilder-dependency-helper"))
       Dir.mkdir(File.join(dir, "whalebuilder-dependency-helper", "DEBIAN"))
-      EquivControl.new(dscfile, depends, conflicts).
+      EquivControl.new(dscfile, depends, conflicts, options).
         write(File.join(dir, "whalebuilder-dependency-helper", "DEBIAN", "control"))
       system "touch", "-d", "Sun Sep 27 16:03:31 UTC 2015",
              File.join(dir, "whalebuilder-dependency-helper")

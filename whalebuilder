@@ -97,6 +97,7 @@ when 'create'
   options[:release] = "sid"
   options[:repository] = nil
   options[:debootstrap] = false
+  options[:hooks] = []
 
   def guess_mailname
     File.open('/etc/mailname', 'r').read.strip rescue nil ||
@@ -132,6 +133,9 @@ Usage: #{opts.program_name} [globalopts] create [options] <image name>"
     end
     opts.on "--[no-]debootstrap", "use debootstrap to build image, rather than Docker's base Debian image" do |v|
       options[:debootstrap] = v
+    end
+    opts.on "--hook HOOK", "add an additional Dockerfile instruction when building base image" do |v|
+      options[:hooks] << v
     end
     opts.separator ""
     opts.separator "Hint: You may wish to use a pre-built image, such as uhoreg/whalebuilder-base:* (see https://registry.hub.docker.com/u/uhoreg/whalebuilder-base/) rather than building your own."
@@ -188,6 +192,7 @@ Usage: #{opts.program_name} [globalopts] create [options] <image name>"
         end
         @maintainer = options[:maintainer]
         @repository = options[:repository]
+        @hooks = options[:hooks]
       end
     end
     Dockerfile.new(options).write(File.join(dir, "Dockerfile"))

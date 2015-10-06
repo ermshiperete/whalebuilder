@@ -25,7 +25,14 @@ require 'fileutils'
 require 'etc'
 require 'socket'
 
-SHARE_DIR = "/usr/share/whalebuilder"
+SHARE_DIR = begin
+              basedir = File.dirname(File.readlink(__FILE__))
+              if File.exists? File.join(basedir, "Dockerfile.base.erb")
+                basedir
+              else
+                "/usr/share/whalebuilder"
+              end
+            end
 DEFAULT_CONF_FILE = "/etc/whalebuilder.conf"
 
 # common class for templated files

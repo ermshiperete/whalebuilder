@@ -201,10 +201,14 @@ when 'update'
   ##############################################################################
   # Update an existing image
   ##############################################################################
+  options[:reimport] = false
   update_opt_parser = OptionParser.new do |opts|
     opts.banner = "Update a Docker image for building packages
 Usage: #{opts.program_name} [globalopts] update [options] <image name>"
     opts.separator ""
+    opts.on "--[no-]reimport", "re-import the Docker image rather than layering on top" do |v|
+      options[:reimport] = v
+    end
   end
 
   update_opt_parser.parse! ARGV
@@ -222,8 +226,22 @@ Usage: #{opts.program_name} [globalopts] update [options] <image name>"
            "#{ARGV[0]}",
            "sh", "-c", "apt-get update && apt-get -y upgrade && apt-get clean" or
       abort "[whalebuilder] E: unable to update image #{ARGV[0]}"
-    docker "commit", "#{IO.read(File.join(dir, 'cid')).chomp}", "#{ARGV[0]}" or
-      abort "[whalebuilder] E: unable to commit modifications to #{ARGV[0]}"
+    if options[:reimport]
+      r, w = IO.pipe
+      pid = spawn(*(make_docker_command "export", IO.read(File.join(dir, 'cid')).chomp,
+                                        :out => w))
+      pid or abort "[whalebuilder] E: unable to spawn docker export"
+      w.close
+      docker "import", "-", ARGV[0],
+             :in => r,
+             :out => ["/dev/null", "w"] or abort "[whalebuilder] E: docker import failed with code #{$?}"
+      r.close
+      Process.wait pid
+      $? == 0 or abort "[whalebuilder] E: error while exporting to docker import (code #{$?})"
+    else
+      docker "commit", "#{IO.read(File.join(dir, 'cid')).chomp}", "#{ARGV[0]}" or
+        abort "[whalebuilder] E: unable to commit modifications to #{ARGV[0]}"
+    end
     docker "rm", "#{IO.read(File.join(dir, 'cid')).chomp}", :out => "/dev/null" or
       warn "[whalebuilder] W: unable to remove docker container #{IO.read(File.join(dir, 'cid')).chomp} (#{$?})"
   end

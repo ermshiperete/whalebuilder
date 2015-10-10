@@ -75,7 +75,7 @@ Usage: #{opts.program_name} [globalopts] <command> [options]"
   opts.separator ""
   opts.separator "Commands:"
   opts.separator "    create - create a Docker image"
-  opts.separator "    update - update a Docker image (not implemented)"
+  opts.separator "    update - update a Docker image"
   opts.separator "    build - build a package"
   opts.separator ""
   opts.separator "See '#{opts.program_name} <command> --help' for help about a specific command"
@@ -195,6 +195,35 @@ Usage: #{opts.program_name} [globalopts] create [options] <image name>"
     args << "--pull=true" unless options[:debootstrap]
     args << dir
     docker(*args)
+  end
+
+when 'update'
+  ##############################################################################
+  # Update an existing image
+  ##############################################################################
+  update_opt_parser = OptionParser.new do |opts|
+    opts.banner = "Update a Docker image for building packages
+Usage: #{opts.program_name} [globalopts] update [options] <image name>"
+    opts.separator ""
+  end
+
+  update_opt_parser.parse! ARGV
+
+  if ARGV.length == 0
+    global_opt_parser.abort "Error: image name not specified"
+  end
+
+  if ARGV.length > 1
+    global_opt_parser.abort "Error: extra arguments found"
+  end
+
+  Dir.mktmpdir do |dir|
+    docker "run", "--cidfile=#{File.join(dir, 'cid')}",
+           "#{ARGV[0]}",
+           "sh", "-c", "apt-get update && apt-get -y upgrade && apt-get clean" or
+      abort "[whalebuilder] E: unable to update image #{ARGV[0]}"
+    docker "commit", "#{IO.read(File.join(dir, 'cid')).chomp}", "#{ARGV[0]}" or
+      abort "[whalebuilder] E: unable to commit modifications to #{ARGV[0]}"
   end
 
 when 'build'

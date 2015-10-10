@@ -224,6 +224,7 @@ Usage: #{opts.program_name} [globalopts] update [options] <image name>"
       abort "[whalebuilder] E: unable to update image #{ARGV[0]}"
     docker "commit", "#{IO.read(File.join(dir, 'cid')).chomp}", "#{ARGV[0]}" or
       abort "[whalebuilder] E: unable to commit modifications to #{ARGV[0]}"
+    docker "rm", "#{IO.read(File.join(dir, 'cid')).chomp}", :out => "/dev/null"
   end
 
 when 'build'

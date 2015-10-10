@@ -26,7 +26,7 @@ require 'etc'
 require 'socket'
 
 SHARE_DIR = begin
-              basedir = File.dirname(File.readlink(__FILE__))
+              basedir = File.dirname(File.realpath(__FILE__))
               if File.exists? File.join(basedir, "Dockerfile.base.erb")
                 basedir
               else

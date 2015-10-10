@@ -408,6 +408,7 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
       abort "[whalebuilder] E: docker run failed with error #{$?}"
     docker "cp", "#{containername}:/home/whalebuilder/#{dscfile.package}_#{dscfile.version}", options[:results] or
       abort "[whalebuilder] E: docker cp failed with error #{$?}"
+    puts "[whalebuilder] I: copied build results to #{options[:results]}/#{dscfile.package}_#{dscfile.version}"
     IO.popen(make_docker_command "diff", containername) do |f|
       out = f.read.split(/\n/)
       out.select! do |x|

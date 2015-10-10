@@ -1,9 +1,10 @@
+
 Package: whalebuilder-dependency-helper
 Section: misc
 Priority: optional
 Standards-Version: 3.9.2
 Version: 1.0
-Architecture: any
+Architecture: <%= @arch %>
 Maintainer: Whalebuilder Dependency Helper
 <% if @depends.length > 0 -%>
 Depends: <%= @depends %>

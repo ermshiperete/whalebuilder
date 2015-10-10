@@ -306,6 +306,7 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
       class EquivControl < Templater
         TEMPLATE_FILE = "whalebuilder-dependency-helper.ctl.erb"
         def initialize (dsc, depends, conflicts)
+          @arch = `dpkg-architecture -qDEB_HOST_ARCH`.chomp
           @dsc = dsc
           @depends = depends
           @conflicts = conflicts

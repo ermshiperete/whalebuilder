@@ -331,7 +331,7 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
 
     # create image with build dependencies installed
     if options[:install_depends]
-      puts "[whalebuilder] building Docker image with build dependencies"
+      puts "[whalebuilder] I: building Docker image with build dependencies"
       # build a package that depends on the build dependencies
       class EquivControl < Templater
         TEMPLATE_FILE = "whalebuilder-dependency-helper.ctl.erb"
@@ -397,7 +397,7 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
     BuildScript.new(dsc, dscfile).write(File.join(dir, "source", "build.sh"))
     File.chmod 0755, File.join(dir, "source", "build.sh")
 
-    puts "[whalebuilder] building package"
+    puts "[whalebuilder] I: building package"
     containername = "whalebuilder_build_#{escaped_package}_#{escaped_version}"
     # build the package
     docker "run", "--user=whalebuilder", "--name=#{containername}", "-v", "#{dir}/source:/home/whalebuilder/source:ro", "--net=none", name, "/bin/sh", "./source/build.sh"

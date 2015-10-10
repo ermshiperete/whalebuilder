@@ -266,21 +266,71 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
     dscfile = Debian::Dsc.new(dsccontents)
     escaped_package = dscfile.package.gsub(/[^A-Za-z0-9.-]/) {|s| "_" + s.ord.to_s(16) }
     escaped_version = dscfile.version.gsub(/[^A-Za-z0-9.-]/) {|s| "_" + s.ord.to_s(16) }
+    cpu = `dpkg-architecture -qDEB_HOST_ARCH_CPU`.chomp
+    os = `dpkg-architecture -qDEB_HOST_ARCH_OS`.chomp
+    depends = Array(dscfile["Build-Depends"]) + Array(dscfile["Build-Depends-Indep"])
+    conflicts = Array(dscfile["Build-Conflicts"]) + Array(dscfile["Build-Conflicts-Indep"])
+
+    # We need to filter out arch-specific dependencies
+    def filter_arch (dependencies, cpu, os)
+      dependencies.gsub(/(?:(\s*[|,]\s*))?([^,|\[]+)\s+\[([^\]]+)\]/) { |c|
+        sep = $1
+        dep = $2
+        archs = $3.split(/\s+/)
+        if archs.all? { |a| a[0] == "!" }
+          # Negative
+          if archs.include? "!#{cpu}" or archs.include? "!#{os}" or
+            archs.include? "!#{os}-any" or archs.include? "!any-#{cpu}"
+            nil
+          else
+            "#{sep}#{dep}"
+          end
+        else
+          # Positive
+          if archs.include? cpu or archs.include? os or
+            archs.include? "#{os}-any" or archs.include? "any-#{cpu}"
+            "#{sep}#{dep}"
+          else
+            nil
+          end
+        end
+      }
+    end
+    depends = filter_arch(depends.join(", "), cpu, os)
+    conflicts = filter_arch(conflicts.join(", "), cpu, os)
 
     # create image with build dependencies installed
     if options[:install_depends]
-      puts "[whalebuilder] Building Docker image with build dependencies"
-      # use equivs to build a package that depends on the build dependencies
+      puts "[whalebuilder] building Docker image with build dependencies"
+      # build a package that depends on the build dependencies
       class EquivControl < Templater
         TEMPLATE_FILE = "whalebuilder-dependency-helper.ctl.erb"
-        def initialize (dsc)
+        def initialize (dsc, depends, conflicts)
           @dsc = dsc
+          @depends = depends
+          @conflicts = conflicts
         end
       end
-      EquivControl.new(dscfile).write(File.join(dir, "whalebuilder-dependency-helper.ctl"))
+      Dir.mkdir(File.join(dir, "whalebuilder-dependency-helper"))
+      Dir.mkdir(File.join(dir, "whalebuilder-dependency-helper", "DEBIAN"))
+      EquivControl.new(dscfile, depends, conflicts).
+        write(File.join(dir, "whalebuilder-dependency-helper", "DEBIAN", "control"))
+      system "touch", "-d", "Sun Sep 27 16:03:31 UTC 2015",
+             File.join(dir, "whalebuilder-dependency-helper")
+      system "touch", "-d", "Sun Sep 27 16:03:31 UTC 2015",
+             File.join(dir, "whalebuilder-dependency-helper", "DEBIAN")
+      system "touch", "-d", "Sun Sep 27 16:03:31 UTC 2015",
+             File.join(dir, "whalebuilder-dependency-helper", "DEBIAN", "control")
       Dir.chdir(dir) do
-        system "/usr/bin/equivs-build", "whalebuilder-dependency-helper.ctl", [:out, :err] => ["/dev/null", "w"]
-        File.unlink "whalebuilder-dependency-helper.ctl"
+        system "dpkg-deb", "-b", "whalebuilder-dependency-helper",
+               "whalebuilder-dependency-helper_1.0_all.deb",
+               :out => ["/dev/null", "w"] or
+          abort "[whalebuilder] E: unable to build dependency package (#{$?})"
+        system "strip-nondeterminism", "-t", "ar", "-T", "0", "whalebuilder-dependency-helper_1.0_all.deb",
+               :out => ["/dev/null", "w"] or
+          warn "[whalebuilder] W: unable to strip non determinism from deb package (#{$?})"
+        system "touch", "-d", "Sun Sep 27 16:03:31 UTC 2015",
+               "whalebuilder-dependency-helper_1.0_all.deb"
       end
 
       # create the image

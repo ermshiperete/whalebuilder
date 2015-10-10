@@ -1,9 +1,14 @@
+Package: whalebuilder-dependency-helper
 Section: misc
 Priority: optional
 Standards-Version: 3.9.2
-
-Package: whalebuilder-dependency-helper
+Version: 1.0
 Architecture: any
-<% if @dsc["Build-Depends"] || @dsc["Build-Depends-Indep"] %>Depends: <%= @dsc["Build-Depends"] %><% if @dsc["Build-Depends-Indep"] && @dsc["Build-Depends-Indep"] %>, <% end %><%= @dsc["Build-Depends-Indep"]%>
-<% end %><% if @dsc["Build-Conflicts"] or @dsc["Build-Conflicts-Indep"] %>Conflicts: <%= @dsc["Build-Conflicts"] %><% if @dsc["Build-Conflicts-Indep"] && @dsc["Build-Conflicts-Indep"] %>, <% end %><%= @dsc["Build-Conflicts-Indep"]%>
-<% end %>Description: Installs dependencies needed to build <%= @dsc.package %> <%= @dsc.version %>
+Maintainer: Whalebuilder Dependency Helper
+<% if @depends.length > 0 -%>
+Depends: <%= @depends %>
+<% end -%>
+<% if @conflicts.length > 0 -%>
+Conflicts: <%= @conflicts %>
+<% end -%>
+Description: Installs dependencies needed to build <%= @dsc.package %> <%= @dsc.version %>

@@ -224,7 +224,8 @@ Usage: #{opts.program_name} [globalopts] update [options] <image name>"
       abort "[whalebuilder] E: unable to update image #{ARGV[0]}"
     docker "commit", "#{IO.read(File.join(dir, 'cid')).chomp}", "#{ARGV[0]}" or
       abort "[whalebuilder] E: unable to commit modifications to #{ARGV[0]}"
-    docker "rm", "#{IO.read(File.join(dir, 'cid')).chomp}", :out => "/dev/null"
+    docker "rm", "#{IO.read(File.join(dir, 'cid')).chomp}", :out => "/dev/null" or
+      warn "[whalebuilder] W: unable to remove docker container #{IO.read(File.join(dir, 'cid')).chomp} (#{$?})"
   end
 
 when 'build'
@@ -374,7 +375,8 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
         end
       end
       Dockerfile.new(name).write(File.join(dir, "Dockerfile"))
-      docker "build", (options[:pull] ? "--pull=true" : "--pull=false"), "--tag=#{newname}", dir
+      docker "build", (options[:pull] ? "--pull=true" : "--pull=false"), "--tag=#{newname}", dir or
+        abort "[whalebuilder] E: docker build failed with error code #{$?}"
 
       name = newname
     end
@@ -400,8 +402,12 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
     puts "[whalebuilder] I: building package"
     containername = "whalebuilder_build_#{escaped_package}_#{escaped_version}"
     # build the package
-    docker "run", "--user=whalebuilder", "--name=#{containername}", "-v", "#{dir}/source:/home/whalebuilder/source:ro", "--net=none", name, "/bin/sh", "./source/build.sh"
-    docker "cp", "#{containername}:/home/whalebuilder/#{dscfile.package}_#{dscfile.version}", options[:results]
+    docker "run", "--user=whalebuilder", "--name=#{containername}",
+           "-v", "#{dir}/source:/home/whalebuilder/source:ro",
+           "--net=none", name, "/bin/sh", "./source/build.sh" or
+      abort "[whalebuilder] E: docker run failed with error #{$?}"
+    docker "cp", "#{containername}:/home/whalebuilder/#{dscfile.package}_#{dscfile.version}", options[:results] or
+      abort "[whalebuilder] E: docker cp failed with error #{$?}"
     IO.popen(make_docker_command "diff", containername) do |f|
       out = f.read.split(/\n/)
       out.select! do |x|
@@ -416,12 +422,14 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
         warn out
       end
     end
-    docker "rm", containername, :out => "/dev/null"
+    docker "rm", containername, :out => "/dev/null" or
+      warn "[whalebuilder] W: unable to remove docker container #{containername} (#{$?})"
 
     # remove build dependency image if requested, and only if we created it in
     # the first place
     if options[:remove] && options[:install_depends]
-      docker "rmi", name, :out => "/dev/null"
+      docker "rmi", name, :out => "/dev/null" or
+        warn "[whalebuilder] W: unable to remove docker image #{name} (#{$?})"
     end
   end
 when 'moo'

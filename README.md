@@ -57,6 +57,17 @@ will create a Docker image named `whalebuilder_debian:testing` that will
 contain a Debian testing build environment (e.g. for building a bugfix package
 during a release freeze).
 
+You may also create a base image using debootstrap instead of using Docker's
+debian images by using the --debootstrap flag.
+
+    $ whalebuilder create --debootstrap whalebuilder_debian_debootstrap:sid
+
+Debootstrap-based images may be considered more trustworthy.  See, for example
+https://joeyh.name/blog/entry/docker_run_debian/ for information about
+differences between Docker's debian images and a normal Debian install.
+
+After creating an base image, you may update it using the update command.
+
 For more information, see `whalebuilder --help`.
 
 License

@@ -39,7 +39,8 @@ DEFAULT_CONF_FILE = "/etc/whalebuilder.conf"
 class Templater
   def write (filename)
     b = binding
-    result = ERB.new(File.read(File.join(SHARE_DIR, self.class::TEMPLATE_FILE))).result b
+    result = ERB.new(File.read(File.join(SHARE_DIR, self.class::TEMPLATE_FILE)),
+                     nil, "-").result b
     File.open(filename, "w") do |file|
       file.write result
     end
@@ -129,7 +130,7 @@ Usage: #{opts.program_name} [globalopts] create [options] <image name>"
     opts.on "--maintainer NAME", "maintainer name and address (default: uses DEBEMAIL/DEBFULLNAME or try to guess from login and hostname)" do |v|
       options[:maintainer] = v
     end
-    opts.on "--[no-]debootstrap", "use debootstrap to build image, rather than Docker's base Debian image (not implemented)" do |v|
+    opts.on "--[no-]debootstrap", "use debootstrap to build image, rather than Docker's base Debian image" do |v|
       options[:debootstrap] = v
     end
     opts.separator ""
@@ -146,18 +147,54 @@ Usage: #{opts.program_name} [globalopts] create [options] <image name>"
     global_opt_parser.abort "Error: extra arguments found"
   end
 
+  if options[:debootstrap]
+    Dir.mktmpdir do |dir|
+      # Execute first debootstrap stage
+      puts "[whalebuilder] I: debootstrap first stage"
+      args = ["fakeroot", "cdebootstrap", "--foreign", "--flavour=build"]
+      args << options[:release]
+      args << File.join(dir, "stage1")
+      args << options[:repository] if options[:repository]
+      system(*args,
+             :out => ["/dev/null", "w"]) or abort "[whalebuilder] E: debootstrap failed with code #{$?}"
+
+      # Import the result into a stage1 docker image
+      r, w = IO.pipe
+      puts "[whalebuilder] I: import into docker"
+      pid = spawn "fakeroot", "tar", "-C", File.join(dir, "stage1"), "-cf", "-", ".",
+                  :out => w
+      pid or abort "[whalebuilder] E: unable to spawn tar"
+      w.close
+      docker "import", "-", "#{ARGV[0]}-stage1",
+             :in => r,
+             :out => ["/dev/null", "w"] or abort "[whalebuilder] E: docker import failed with code #{$?}"
+      r.close
+      Process.wait pid
+      $? == 0 or abort "[whalebuilder] E: error while exporting to docker import (code #{$?})"
+    end
+
+  end
+
   Dir.mktmpdir do |dir|
     class Dockerfile < Templater
       TEMPLATE_FILE = "Dockerfile.base.erb"
       def initialize (options)
-        @distribution = options[:distribution]
-        @tag = options[:release]
+        @debootstrap = options[:debootstrap]
+        if @debootstrap
+          @distribution, @tag = "#{ARGV[0]}-stage1".split ":", 2
+        else
+          @distribution = options[:distribution]
+          @tag = options[:release]
+        end
         @maintainer = options[:maintainer]
         @repository = options[:repository]
       end
     end
     Dockerfile.new(options).write(File.join(dir, "Dockerfile"))
-    docker "build", "--tag=#{ARGV[0]}", "--pull=true", dir
+    args = ["build", "--tag=#{ARGV[0]}"]
+    args << "--pull=true" unless options[:debootstrap]
+    args << dir
+    docker(*args)
   end
 
 when 'build'

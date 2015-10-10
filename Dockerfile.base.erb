@@ -1,9 +1,17 @@
 FROM <%= @distribution %>:<%= @tag %>
 MAINTAINER <%= @maintainer %>
 
-RUN groupadd -r whalebuilder && useradd -r -g whalebuilder -d /home/whalebuilder -m whalebuilder
+<%- if @debootstrap -%>
+RUN /sbin/cdebootstrap-foreign
+<%- end -%>
+
+RUN groupadd -r whalebuilder && \
+    useradd -r -g whalebuilder -d /home/whalebuilder -m whalebuilder
 WORKDIR /home/whalebuilder
 
-<% if @repository %>RUN sed -i "s/http:\\/\\/http\\(redir.debian.org\\|.debian.net\\)\\/debian/<%= @repository.gsub(/\//, "\\\\\\\\/") %>/" /etc/apt/sources.list
+<%- if @repository -%>
+RUN sed -i "s/http:\\/\\/http\\(redir.debian.org\\|.debian.net\\)\\/debian/<%= @repository.gsub(/\//, "\\\\\\\\/") %>/" \
+        /etc/apt/sources.list
+<%- end -%>
 
-<% end %>RUN apt-get update && apt-get install -y --no-install-recommends build-essential
+RUN apt-get update && apt-get install -y --no-install-recommends build-essential fakeroot

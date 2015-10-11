@@ -14,4 +14,8 @@ RUN sed -i "s/http:\\/\\/http\\(redir.debian.org\\|.debian.net\\)\\/debian/<%= @
         /etc/apt/sources.list
 <%- end -%>
 
+<%- @hooks.each do |hook| -%>
+<%= hook %>
+<%- end -%>
+
 RUN apt-get update && apt-get install -y --no-install-recommends build-essential fakeroot

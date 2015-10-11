@@ -1,5 +1,9 @@
 FROM <%= @basename %>
 
+<%- @hooks.each do |hook| -%>
+<%= hook %>
+<%- end -%>
+
 COPY whalebuilder-dependency-helper_1.0_*.deb /home/whalebuilder/
 
 RUN dpkg -i --force-depends --force-conflicts whalebuilder-dependency-helper_1.0_*.deb && rm whalebuilder-dependency-helper_1.0_*.deb

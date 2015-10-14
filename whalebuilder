@@ -421,7 +421,6 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
       TEMPLATE_FILE = "build.sh.erb"
       def initialize (dscfilename, dscfile)
         @dscfilename = File.basename dscfilename
-        @builddir = "#{dscfile.package}_#{dscfile.version}"
       end
     end
     BuildScript.new(dsc, dscfile).write(File.join(dir, "source", "build.sh"))
@@ -434,7 +433,8 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
            "-v", "#{dir}/source:/home/whalebuilder/source:ro",
            "--net=none", name, "/bin/sh", "./source/build.sh" or
       abort "[whalebuilder] E: docker run failed with error #{$?}"
-    docker "cp", "#{containername}:/home/whalebuilder/#{dscfile.package}_#{dscfile.version}", options[:results] or
+    docker "cp", "#{containername}:/build/.",
+           "#{options[:results]}/#{dscfile.package}_#{dscfile.version}" or
       abort "[whalebuilder] E: docker cp failed with error #{$?}"
     puts "[whalebuilder] I: copied build results to #{options[:results]}/#{dscfile.package}_#{dscfile.version}"
     IO.popen(make_docker_command "diff", containername) do |f|
@@ -444,7 +444,8 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
           || x == "C /home/whalebuilder" \
           || x == "A /home/whalebuilder/source" \
           || x == "C /tmp" \
-          || x.start_with?("A /home/whalebuilder/#{dscfile.package}_#{dscfile.version}"))
+          || x == "C /build" \
+          || x.start_with?("A /build/"))
       end
       if out.length != 0
         warn "[whalebuilder] W: detected filesystem changes outside of build tree:"

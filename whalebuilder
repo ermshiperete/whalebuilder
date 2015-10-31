@@ -428,13 +428,15 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
 
     puts "[whalebuilder] I: building package"
     containername = "whalebuilder_build_#{escaped_package}_#{escaped_version}"
+    target = "#{options[:results]}/#{dscfile.package}_#{dscfile.version}"
+    FileUtils.mkdir_p target
     # build the package
     docker "run", "--user=whalebuilder", "--name=#{containername}",
            "-v", "#{dir}/source:/home/whalebuilder/source:ro",
            "--net=none", name, "/bin/sh", "./source/build.sh" or
       abort "[whalebuilder] E: docker run failed with error #{$?}"
     docker "cp", "#{containername}:/build/.",
-           "#{options[:results]}/#{dscfile.package}_#{dscfile.version}" or
+           target or
       abort "[whalebuilder] E: docker cp failed with error #{$?}"
     puts "[whalebuilder] I: copied build results to #{options[:results]}/#{dscfile.package}_#{dscfile.version}"
     IO.popen(make_docker_command "diff", containername) do |f|

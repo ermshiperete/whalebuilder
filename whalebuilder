@@ -363,12 +363,11 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
       # build a package that depends on the build dependencies
       class EquivControl < Templater
         TEMPLATE_FILE = "whalebuilder-dependency-helper.ctl.erb"
-        def initialize (dsc, depends, conflicts, options)
+        def initialize (dsc, depends, conflicts)
           @arch = `dpkg-architecture -qDEB_HOST_ARCH`.chomp
           @dsc = dsc
           @depends = depends
           @conflicts = conflicts
-          @hooks = options[:hooks]
         end
       end
       EquivControl.new(dscfile, depends, conflicts).
@@ -401,11 +400,12 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
 
       class Dockerfile < Templater
         TEMPLATE_FILE = "Dockerfile.build.erb"
-        def initialize (basename)
+        def initialize (basename, options)
           @basename = basename
+          @hooks = options[:hooks]
         end
       end
-      Dockerfile.new(name).write(File.join(dir, "Dockerfile"))
+      Dockerfile.new(name, options).write(File.join(dir, "Dockerfile"))
       docker "build", (options[:pull] ? "--pull=true" : "--pull=false"), "--tag=#{newname}", dir or
         abort "[whalebuilder] E: docker build failed with error code #{$?}"
 

@@ -371,24 +371,27 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
           @hooks = options[:hooks]
         end
       end
-      Dir.mkdir(File.join(dir, "whalebuilder-dependency-helper"))
-      Dir.mkdir(File.join(dir, "whalebuilder-dependency-helper", "DEBIAN"))
-      EquivControl.new(dscfile, depends, conflicts, options).
-        write(File.join(dir, "whalebuilder-dependency-helper", "DEBIAN", "control"))
-      system "touch", "-d", "Sun Sep 27 16:03:31 UTC 2015",
-             File.join(dir, "whalebuilder-dependency-helper")
-      system "touch", "-d", "Sun Sep 27 16:03:31 UTC 2015",
-             File.join(dir, "whalebuilder-dependency-helper", "DEBIAN")
-      system "touch", "-d", "Sun Sep 27 16:03:31 UTC 2015",
-             File.join(dir, "whalebuilder-dependency-helper", "DEBIAN", "control")
+      EquivControl.new(dscfile, depends, conflicts).
+        write(File.join(dir, "control"))
       Dir.chdir(dir) do
-        system "dpkg-deb", "-b", "whalebuilder-dependency-helper",
-               "whalebuilder-dependency-helper_1.0_all.deb",
-               :out => ["/dev/null", "w"] or
-          abort "[whalebuilder] E: unable to build dependency package (#{$?})"
-        system "strip-nondeterminism", "-t", "ar", "-T", "0", "whalebuilder-dependency-helper_1.0_all.deb",
-               :out => ["/dev/null", "w"] or
-          warn "[whalebuilder] W: unable to strip non determinism from deb package (#{$?})"
+        File.write("debian-binary", "2.0\n")
+        reproducible_args = [ "--mtime=Sun Sep 27 16:03:31 UTC 2015",
+                              "--numeric-owner", "--owner=root",
+                              "-I", "gzip --no-name",
+                              "--no-recursion" ]
+        system "tar", "-cf", "data.tar.gz",
+               *reproducible_args,
+               "./" or
+          abort "[whalebuilder] E: cannot create data.tar.gz (#{$?})"
+        system "tar", "-cf", "control.tar.gz",
+               *reproducible_args,
+               "./", "./control" or
+          abort "[whalebuilder] E: cannot create control.tar.gz (#{$?})"
+        system "ar", "qD", "whalebuilder-dependency-helper_1.0_all.deb",
+               "debian-binary", "control.tar.gz", "data.tar.gz" or # order is important
+          abort "[whalebuilder] E: cannot create dependency package (#{$?})"
+        system "dpkg", "-I", "whalebuilder-dependency-helper_1.0_all.deb" or
+          abort "[whalebuilder] E: dependency package is not correctly built (#{$?})"
         system "touch", "-d", "Sun Sep 27 16:03:31 UTC 2015",
                "whalebuilder-dependency-helper_1.0_all.deb"
       end

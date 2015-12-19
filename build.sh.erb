@@ -2,10 +2,10 @@
 
 set -e
 
-mkdir -p <%= @builddir %>
-cd <%= @builddir %>
-dpkg-source -x ../source/<%= @dscfilename %> builddir
-cd builddir
-dpkg-buildpackage -uc -us 2>&1 | tee ../<%= @builddir %>_`dpkg-architecture -qDEB_BUILD_ARCH`.build
+cd /build
+dpkg-source -x ~/source/<%= @dscfilename %>
+builddir=$(echo */)
+cd ${builddir}
+dpkg-buildpackage -uc -us 2>&1 | tee /build/${builddir%%/}_`dpkg-architecture -qDEB_BUILD_ARCH`.build
 cd ..
-rm -rf builddir
+rm -rf ${builddir}

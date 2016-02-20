@@ -229,7 +229,7 @@ Usage: #{opts.program_name} [globalopts] update [options] <image name>"
   Dir.mktmpdir do |dir|
     docker "run", "--cidfile=#{File.join(dir, 'cid')}",
            "#{ARGV[0]}",
-           "sh", "-c", "apt-get update && apt-get -y upgrade && apt-get clean" or
+           "sh", "-c", "apt-get update && apt-get -y dist-upgrade && apt-get autoremove && apt-get clean" or
       abort "[whalebuilder] E: unable to update image #{ARGV[0]}"
     if options[:reimport]
       r, w = IO.pipe

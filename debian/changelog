@@ -1,3 +1,14 @@
+whalebuilder (0.4) unstable; urgency=low
+
+  * New release
+    * fix some dependencies
+    * incorporate patches from bernat
+      * implement debootstrap support
+      * make dependency package reproducible
+      * implement update command
+
+ -- Hubert Chathi <uhoreg@debian.org>  Sat, 20 Feb 2016 15:12:02 -0500
+
 whalebuilder (0.3) unstable; urgency=low
 
   * New release

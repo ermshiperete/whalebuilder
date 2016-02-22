@@ -438,9 +438,15 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
            "-v", "#{dir}/source:/home/whalebuilder/source:ro",
            "--net=none", name, "/bin/sh", "/home/whalebuilder/source/build.sh" or
       abort "[whalebuilder] E: docker run failed with error #{$?}"
-    docker "cp", "#{containername}:/build/.",
-           target or
+    r, w = IO.pipe
+    pid = spawn(*(make_docker_command "cp", "#{containername}:/build/.", "-"), :out => w)
+    pid or abort "[whalebuilder] E: docker cp failed with error #{$?}"
+    w.close
+    system "tar", "-x", "--no-same-owner", "--no-same-permissions", "--strip-components=1",
+           :in => r,
+           :chdir => target or
       abort "[whalebuilder] E: docker cp failed with error #{$?}"
+    r.close
     puts "[whalebuilder] I: copied build results to #{options[:results]}/#{dscfile.package}_#{dscfile.version}"
     IO.popen(make_docker_command "diff", containername) do |f|
       out = f.read.split(/\n/)

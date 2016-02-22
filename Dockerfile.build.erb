@@ -8,5 +8,5 @@ COPY whalebuilder-dependency-helper_1.0_*.deb /home/whalebuilder/
 
 RUN dpkg -i --force-depends --force-conflicts /home/whalebuilder/whalebuilder-dependency-helper_1.0_*.deb && \
     rm /home/whalebuilder/whalebuilder-dependency-helper_1.0_*.deb
-RUN apt-get update && apt-get install -f -y --no-install-recommends
+RUN apt-get update && apt-get install -f -y --no-install-recommends && apt-get clean
 RUN install -o whalebuilder -g whalebuilder -d /build

@@ -6,8 +6,9 @@ whalebuilder (0.4) unstable; urgency=low
       * implement debootstrap support
       * make dependency package reproducible
       * implement update command
+    * make sure copied build results are owned by the user
 
- -- Hubert Chathi <uhoreg@debian.org>  Sat, 20 Feb 2016 15:12:02 -0500
+ -- Hubert Chathi <uhoreg@debian.org>  Mon, 22 Feb 2016 10:13:22 -0500
 
 whalebuilder (0.3) unstable; urgency=low
 

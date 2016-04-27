@@ -1,2 +1,3 @@
 *.erb /usr/share/whalebuilder
+data.tar.gz /usr/share/whalebuilder
 whalebuilder /usr/bin

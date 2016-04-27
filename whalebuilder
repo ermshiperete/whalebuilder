@@ -374,17 +374,14 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
         write(File.join(dir, "control"))
       Dir.chdir(dir) do
         File.write("debian-binary", "2.0\n")
+        FileUtils.cp File.join(SHARE_DIR, "data.tar.gz"), File.join(dir, "data.tar.gz")
         reproducible_args = [ "--mtime=Sun Sep 27 16:03:31 UTC 2015",
                               "--numeric-owner", "--owner=root",
                               "-I", "gzip --no-name",
                               "--no-recursion" ]
-        system "tar", "-cf", "data.tar.gz",
-               *reproducible_args,
-               "./" or
-          abort "[whalebuilder] E: cannot create data.tar.gz (#{$?})"
         system "tar", "-cf", "control.tar.gz",
                *reproducible_args,
-               "./", "./control" or
+               "./control" or
           abort "[whalebuilder] E: cannot create control.tar.gz (#{$?})"
         system "ar", "qD", "whalebuilder-dependency-helper_1.0_all.deb",
                "debian-binary", "control.tar.gz", "data.tar.gz" or # order is important

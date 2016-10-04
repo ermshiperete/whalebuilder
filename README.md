@@ -70,6 +70,29 @@ After creating an base image, you may update it using the update command.
 
 For more information, see `whalebuilder --help`.
 
+Running in non-Debian environments
+----------------------------------
+
+In theory, since most of the work is done in Docker images, whalebuilder should
+be runnable in non-Debian environments, though this has not been tested.
+
+* If you cannot run debootstrap to build a base image, you may use a prebuilt one
+  instead.
+* Whalebuilder requires the [gpgme](http://github.com/ueno/ruby-gpgme) and
+  [debian](https://anonscm.debian.org/git/pkg-ruby-extras/ruby-debian.git/)
+  Ruby modules, which should both be usable in most environments.
+* Whalebuilder calls `dpkg-architecture` to determine the build environment.
+  Since `dpkg-architecture` won't be available on non-Debian environments, you
+  can provide your own.  Either place it in the path, or edit whalebuilder to
+  call it at the appropriate spot.  Alternatively, you can hard-code the values
+  in whalebuilder.  Whalebuilder queries the following values:
+  `DEB_HOST_ARCH_CPU` is the Debian CPU name of the host machine (e.g. for
+  64-bit x86 machines, this value should be `amd64`), `DEB_HOST_ARCH_OS` is the
+  Debian system name (this value should probably be `Linux` unless you are
+  using a Docker image for a different system), and `DEB_HOST_ARCH` is the
+  Debian architecture (e.g. for 64-bit x86 machines, this value should be
+  `amd64`).
+
 License
 -------
 Copyright (C) 2015 Hubert Chathi <hubert@uhoreg.ca>

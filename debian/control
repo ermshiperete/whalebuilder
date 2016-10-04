@@ -3,12 +3,12 @@ Section: devel
 Priority: extra
 Maintainer: Hubert Chathi <uhoreg@debian.org>
 Build-Depends: debhelper (>= 9)
-Standards-Version: 3.9.6
-Homepage: http://www.uhoreg.ca/programming/debian/whalebuilder
+Standards-Version: 3.9.7
+Homepage: https://www.uhoreg.ca/programming/debian/whalebuilder
 
 Package: whalebuilder
 Architecture: all
-Depends: ${shlibs:Depends}, ruby, ruby-gpgme, ruby-debian, docker.io
+Depends: ${shlibs:Depends}, ${misc:Depends}, ruby, ruby-gpgme, ruby-debian, docker.io
 Recommends: cdebootstrap, fakeroot
 Suggests: sudo
 Description: Debian package builder using Docker

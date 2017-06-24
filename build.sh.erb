@@ -6,6 +6,6 @@ cd /build
 dpkg-source -x ~/source/<%= @dscfilename %>
 builddir=$(echo */)
 cd ${builddir}
-dpkg-buildpackage -uc -us 2>&1
+dpkg-buildpackage -uc -us 2>&1 | tee /build/<%= @dscfile.package %>_<%= @dscfile.version %>_`dpkg-architecture -qDEB_BUILD_ARCH`.build
 cd ..
 rm -rf ${builddir}

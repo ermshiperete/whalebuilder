@@ -430,6 +430,7 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
       TEMPLATE_FILE = "build.sh.erb"
       def initialize (dscfilename, dscfile)
         @dscfilename = File.basename dscfilename
+        @dscfile = dscfile
       end
     end
     BuildScript.new(dsc, dscfile).write(File.join(dir, "source", "build.sh"))

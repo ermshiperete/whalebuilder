@@ -5,6 +5,8 @@ Maintainer: Hubert Chathi <uhoreg@debian.org>
 Build-Depends: debhelper (>= 9)
 Standards-Version: 3.9.7
 Homepage: https://www.uhoreg.ca/programming/debian/whalebuilder
+Vcs-Git: git://anonscm.debian.org/collab-maint/whalebuilder.git
+Vcs-Browser: https://anonscm.debian.org/cgit/collab-maint/whalebuilder.git
 
 Package: whalebuilder
 Architecture: all

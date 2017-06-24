@@ -1,3 +1,10 @@
+whalebuilder (0.4.2) unstable; urgency=medium
+
+  * New release
+    * allow installing extra .debs when building dependency image
+
+ --
+
 whalebuilder (0.4.1) unstable; urgency=low
 
   * New release

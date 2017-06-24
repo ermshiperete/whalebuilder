@@ -260,6 +260,7 @@ when 'build'
   options[:install_depends] = true
   options[:remove] = false
   options[:hooks] = []
+  options[:extra_debs] = []
 
   build_opt_parser = OptionParser.new do |opts|
     opts.banner = "Build a package
@@ -283,6 +284,9 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
     end
     opts.on "--hook HOOK", "add an additional Dockerfile instruction inserted after unpacking base image" do |v|
       options[:hooks] << v
+    end
+    opts.on "--deb DEB_FILE", "install a .deb package before installing other dependencies" do |v|
+      options[:extra_debs] << v
     end
   end
 
@@ -392,6 +396,10 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
                "whalebuilder-dependency-helper_1.0_all.deb"
       end
 
+      if not options[:extra_debs].empty?
+        FileUtils.cp options[:extra_debs], dir
+      end
+
       # create the image
       newname = "whalebuilder_build/#{escaped_package}:#{escaped_version}"
 
@@ -400,6 +408,7 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
         def initialize (basename, options)
           @basename = basename
           @hooks = options[:hooks]
+          @extra_debs = options[:extra_debs].map { |x| File.basename x }
         end
       end
       Dockerfile.new(name, options).write(File.join(dir, "Dockerfile"))

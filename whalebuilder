@@ -67,11 +67,11 @@ options[:config] = DEFAULT_CONF_FILE
 global_opt_parser = OptionParser.new do |opts|
   opts.banner = "Debian package builder using Docker
 Usage: #{opts.program_name} [globalopts] <command> [options]"
-  opts.separator ""
-  opts.separator "Global options:"
-  opts.on "-c", "--config FILE", "configuration file (default: #{DEFAULT_CONF_FILE}) (not used)" do |v|
-    options[:config] = v
-  end
+  #opts.separator ""
+  #opts.separator "Global options:"
+  #opts.on "-c", "--config FILE", "configuration file (default: #{DEFAULT_CONF_FILE}) (not used)" do |v|
+  #  options[:config] = v
+  #end
   opts.separator ""
   opts.separator "Commands:"
   opts.separator "    create - create a Docker image"

@@ -2,6 +2,7 @@ whalebuilder (0.4.2) unstable; urgency=medium
 
   * New release
     * allow installing extra .debs when building dependency image
+    * add docker-ce as an alternate dependency (closes: #849379)
 
  --
 

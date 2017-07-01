@@ -10,7 +10,7 @@ Vcs-Browser: https://anonscm.debian.org/cgit/collab-maint/whalebuilder.git
 
 Package: whalebuilder
 Architecture: all
-Depends: ${shlibs:Depends}, ${misc:Depends}, ruby, ruby-gpgme, ruby-debian, docker.io
+Depends: ${shlibs:Depends}, ${misc:Depends}, ruby, ruby-gpgme, ruby-debian, docker.io | docker-ce
 Recommends: cdebootstrap, fakeroot
 Suggests: sudo
 Description: Debian package builder using Docker

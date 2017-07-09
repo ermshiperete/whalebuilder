@@ -30,11 +30,6 @@ ensures that it pulls the latest version of the base image.  The resulting
 packages and build information will be saved by default in
 `~/.local/share/whalebuilder/foo_0.1-1`.
 
-Note: the results will not be owned by your user, although you can still read
-it.  However, to delete the results, you will need to use `sudo`.
-
-Note: for all Whalebuilder commands, you must have `sudo` access to Docker.
-
 After you have built a package in this way, there will be a Docker image named
 `whalebuilder_build/<pkgname>:<pkgversion>` (with some escaping done to ensure
 it's a valid Docker image name), e.g. `whalebuilder_build/foo:0.1-1`.  You can
@@ -95,7 +90,7 @@ be runnable in non-Debian environments, though this has not been tested.
 
 License
 -------
-Copyright (C) 2015 Hubert Chathi <hubert@uhoreg.ca>
+Copyright (C) 2015-2017 Hubert Chathi <hubert@uhoreg.ca>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

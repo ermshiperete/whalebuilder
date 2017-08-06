@@ -2,7 +2,10 @@ FROM <%= @distribution %>:<%= @tag %>
 MAINTAINER <%= @maintainer %>
 
 <%- if @debootstrap -%>
-RUN /sbin/cdebootstrap-foreign
+# don't mount /proc and /sys because Docker already does that, and blows up if
+# you try to do it
+RUN sed -i "s%.*mount -t \\(proc\\|sysfs\\) .*%%" /debootstrap/functions && \
+    /debootstrap/debootstrap --second-stage
 <%- end -%>
 
 RUN groupadd -r whalebuilder && \

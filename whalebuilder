@@ -155,7 +155,7 @@ Usage: #{opts.program_name} [globalopts] create [options] <image name>"
     Dir.mktmpdir do |dir|
       # Execute first debootstrap stage
       puts "[whalebuilder] I: debootstrap first stage"
-      args = ["fakeroot", "cdebootstrap", "--foreign", "--flavour=build"]
+      args = ["fakeroot", "debootstrap", "--foreign", "--variant=buildd"]
       args << options[:release]
       args << File.join(dir, "stage1")
       args << (options[:repository] or "http://httpredir.debian.org/debian")

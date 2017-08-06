@@ -440,6 +440,19 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
     containername = "whalebuilder_build_#{escaped_package}_#{escaped_version}"
     target = "#{options[:results]}/#{dscfile.package}_#{dscfile.version}"
     FileUtils.mkdir_p target
+    # remove stale container
+    r, w = IO.pipe
+    if docker "inspect", "-f", "{{.State.Running}}", containername, :out => w, :err => "/dev/null"
+      w.close
+      if r.read.strip == "false"
+        docker "rm", containername
+      else
+        abort "[whalebuilder] E: package is currently being built.  Run \"docker rm #{containername}\" to kill the existing build."
+      end
+    else
+      w.close
+    end
+    r.close
     # build the package
     docker "run", "--user=whalebuilder", "--name=#{containername}",
            "-v", "#{dir}/source:/home/whalebuilder/source:ro",

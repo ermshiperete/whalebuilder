@@ -257,6 +257,7 @@ when 'build'
   ##############################################################################
   options[:results] = "~/.local/share/whalebuilder"
   options[:pull] = false
+  options[:cache] = true
   options[:install_depends] = true
   options[:remove] = false
   options[:hooks] = []
@@ -275,6 +276,9 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
     end
     opts.on "--[no-]pull", "pull latest version of image (default: false)" do |v|
       options[:pull] = v
+    end
+    opts.on "--[no-]cache", "use docker cache when building image (default: true)" do |v|
+      options[:cache] = v
     end
     opts.on "--[no-]install-depends", "install dependencies (default: true)" do |v|
       options[:install_depends] = v
@@ -412,7 +416,11 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
         end
       end
       Dockerfile.new(name, options).write(File.join(dir, "Dockerfile"))
-      docker "build", (options[:pull] ? "--pull=true" : "--pull=false"), "--tag=#{newname}", dir or
+      args = ["build", "--tag=#{newname}"]
+      args << "--pull" if options[:pull]
+      args << "--no-cache" unless options[:cache]
+      args << dir
+      docker(*args) or
         abort "[whalebuilder] E: docker build failed with error code #{$?}"
 
       name = newname

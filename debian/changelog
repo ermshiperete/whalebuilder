@@ -4,6 +4,7 @@ whalebuilder (0.4.2) unstable; urgency=medium
   * add docker-ce as an alternate dependency (closes: #849379)
   * switch to debootstrap instead of cdebootstrap
   * remove stale build containers when rebuilding
+  * add option to not use cache when building dependency image
 
  --
 

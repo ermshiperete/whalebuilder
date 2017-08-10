@@ -1,4 +1,4 @@
-whalebuilder (0.4.2) unstable; urgency=medium
+whalebuilder (0.5) unstable; urgency=medium
 
   * allow installing extra .debs when building dependency image
   * add docker-ce as an alternate dependency (closes: #849379)
@@ -6,7 +6,7 @@ whalebuilder (0.4.2) unstable; urgency=medium
   * remove stale build containers when rebuilding
   * add option to not use cache when building dependency image
 
- --
+ -- Hubert Chathi <uhoreg@debian.org>  Thu, 10 Aug 2017 10:58:36 -0400
 
 whalebuilder (0.4.1) unstable; urgency=low
 

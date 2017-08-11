@@ -464,7 +464,7 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
     # build the package
     docker "run", "--user=whalebuilder", "--name=#{containername}",
            "-v", "#{dir}/source:/home/whalebuilder/source:ro",
-           "--net=none", name, "/bin/sh", "/home/whalebuilder/source/build.sh" or
+           "--net=none", name, "/bin/bash", "/home/whalebuilder/source/build.sh" or
       abort "[whalebuilder] E: docker run failed with error #{$?}"
     r, w = IO.pipe
     pid = spawn(*(make_docker_command "cp", "#{containername}:/build/.", "-"), :out => w)

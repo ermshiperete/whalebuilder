@@ -1,3 +1,9 @@
+whalebuilder (0.5.1) unstable; urgency=medium
+
+  * use pipefail to make sure that build failures are caught
+
+ -- Hubert Chathi <uhoreg@debian.org>  Fri, 11 Aug 2017 15:08:21 -0400
+
 whalebuilder (0.5) unstable; urgency=medium
 
   * allow installing extra .debs when building dependency image

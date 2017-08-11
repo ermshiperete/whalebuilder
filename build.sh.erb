@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/bash
 
-set -e
+set -eo pipefail
 
 cd /build
 dpkg-source -x ~/source/<%= @dscfilename %>

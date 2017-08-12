@@ -65,6 +65,33 @@ After creating an base image, you may update it using the update command.
 
 For more information, see `whalebuilder --help`.
 
+Tips and Tricks
+---------------
+- if you maintain many packages that have a common set of dependencies, you can
+  create a base image that contains those dependencies, so that they do not
+  have to be re-installed for each package.  Create a directory with this
+  `Dockerfile` (with the appropriate substitutions):
+
+        FROM [your normal base image]
+        
+        RUN apt-get update && \
+            apt-get install -y --no-install-recommends [dependencies...] && \
+            apt-get clean
+
+  and then run: `docker build -t [newimagename] .`, and use this image as your
+  base image when building
+
+- when creating a new package, sometimes you may be unsure of the package's
+  exact build-dependencies.  You can start with a base guess, try building the
+  package with whalebuilder, and if it fails, update the build-dependencies,
+  and use the dependency image that whalebuilder created as your new base
+  image.  In this way, it will not need to re-install the build-dependencies
+  that it had already installed.
+
+- if you need to install build-dependencies that are not (yet) in Debian, you
+  can either use the `--deb` option to install individual `.deb` files, or you
+  can use the `--hooks` feature to add sources to `/etc/apt/sources.list.d/`
+
 Running in non-Debian environments
 ----------------------------------
 

@@ -268,6 +268,7 @@ when 'build'
   options[:hooks] = []
   options[:extra_debs] = []
   options[:image_name] = "whalebuilder/debian:sid"
+  options[:network] = "none"
 
   build_opt_parser = OptionParser.new do |opts|
     opts.banner = "Build a package
@@ -297,6 +298,9 @@ Usage: #{opts.program_name} [globalopts] build [options] [image name] <dsc file>
     end
     opts.on "--deb DEB_FILE", "install a .deb package before installing other dependencies" do |v|
       options[:extra_debs] << v
+    end
+    opts.on "--network NETWORK", "enable network NETWORK, e.g. 'bridge'. By default network access is disabled ('none')." do |v|
+        options[:network] = v
     end
     opts.separator ""
     opts.separator "If the image name is omitted, it will default to whalebuilder/debian:sid."
@@ -473,7 +477,7 @@ Usage: #{opts.program_name} [globalopts] build [options] [image name] <dsc file>
            "--name=#{containername}",
            "-v", "#{dir}/source:/home/whalebuilder/source:ro",
            "-w", "/build",
-           "--net=none", options[:image_name], "/bin/sh" or
+           "--network=#{options[:network]}", options[:image_name], "/bin/sh" or
       abort "[whalebuilder] E: failed to start container with error #{$?}"
     unless docker "exec", "--user=whalebuilder", containername,
            "/bin/bash", "/home/whalebuilder/source/build.sh"

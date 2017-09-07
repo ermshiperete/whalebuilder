@@ -138,7 +138,7 @@ Usage: #{opts.program_name} [globalopts] create [options] <image name>"
       options[:hooks] << v
     end
     opts.separator ""
-    opts.separator "Hint: You may wish to use a pre-built image, such as uhoreg/whalebuilder-base:* (see https://registry.hub.docker.com/u/uhoreg/whalebuilder-base/) rather than building your own."
+    opts.separator "Hint: You can use a pre-built image, such as whalebuilder/debian:* (see https://hub.docker.com/r/whalebuilder/debian/) rather than building your own."
   end
 
   create_opt_parser.parse! ARGV

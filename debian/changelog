@@ -1,3 +1,9 @@
+whalebuilder (0.5.2) unstable; urgency=medium
+
+  * make base image optional in build
+
+ --
+
 whalebuilder (0.5.1) unstable; urgency=medium
 
   * use pipefail to make sure that build failures are caught

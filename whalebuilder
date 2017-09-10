@@ -262,10 +262,11 @@ when 'build'
   options[:remove] = false
   options[:hooks] = []
   options[:extra_debs] = []
+  options[:image_name] = "whalebuilder/debian:sid"
 
   build_opt_parser = OptionParser.new do |opts|
     opts.banner = "Build a package
-Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>"
+Usage: #{opts.program_name} [globalopts] build [options] [image name] <dsc file>"
     opts.separator ""
     opts.separator "Build options:"
     opts.on "--results DIR", "directory to store the results (default: ~/.local/share/whalebuilder)" do |v|
@@ -292,6 +293,8 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
     opts.on "--deb DEB_FILE", "install a .deb package before installing other dependencies" do |v|
       options[:extra_debs] << v
     end
+    opts.separator ""
+    opts.separator "If the image name is omitted, it will default to whalebuilder/debian:sid."
   end
 
   build_opt_parser.parse! ARGV
@@ -300,15 +303,14 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
     global_opt_parser.abort "Error: image name and dsc not specified"
   end
 
-  if ARGV.length == 1
-    global_opt_parser.abort "Error: dsc not specified"
-  end
-
   if ARGV.length > 2
     global_opt_parser.abort "Error: extra arguments found"
   end
 
-  name = ARGV.shift
+  if ARGV.length == 2
+    options[:image_name] = ARGV.shift
+  end
+
   dsc = ARGV.shift
   dscdir = File.dirname dsc
 
@@ -409,13 +411,13 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
 
       class Dockerfile < Templater
         TEMPLATE_FILE = "Dockerfile.build.erb"
-        def initialize (basename, options)
-          @basename = basename
+        def initialize (options)
+          @basename = options[:image_name]
           @hooks = options[:hooks]
           @extra_debs = options[:extra_debs].map { |x| File.basename x }
         end
       end
-      Dockerfile.new(name, options).write(File.join(dir, "Dockerfile"))
+      Dockerfile.new(options).write(File.join(dir, "Dockerfile"))
       args = ["build", "--tag=#{newname}"]
       args << "--pull" if options[:pull]
       args << "--no-cache" unless options[:cache]
@@ -423,7 +425,7 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
       docker(*args) or
         abort "[whalebuilder] E: docker build failed with error code #{$?}"
 
-      name = newname
+      options[:image_name] = newname
     end
 
     # copy source files
@@ -497,7 +499,7 @@ Usage: #{opts.program_name} [globalopts] build [options] <image name> <dsc file>
     # remove build dependency image if requested, and only if we created it in
     # the first place
     if options[:remove] && options[:install_depends]
-      docker "rmi", name, :out => "/dev/null" or
+      docker "rmi", options[:image_name], :out => "/dev/null" or
         warn "[whalebuilder] W: unable to remove docker image #{name} (#{$?})"
     end
   end

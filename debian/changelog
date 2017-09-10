@@ -1,6 +1,7 @@
-whalebuilder (0.5.2) unstable; urgency=medium
+whalebuilder (0.6) unstable; urgency=medium
 
   * make base image optional in build
+  * allow starting a shell in container when build fails
 
  --
 

@@ -61,6 +61,11 @@ def docker (*args)
   system(*(make_docker_command(*args)))
 end
 
+def docker_rm (*args)
+  docker "rm", *args, :out => "/dev/null" or
+    warn "[whalebuilder] W: unable to remove docker container #{containername} (#{$?})"
+end
+
 #global options
 options = {}
 options[:config] = DEFAULT_CONF_FILE
@@ -231,9 +236,10 @@ Usage: #{opts.program_name} [globalopts] update [options] <image name>"
            "#{ARGV[0]}",
            "sh", "-c", "apt-get update && apt-get -y dist-upgrade && apt-get autoremove && apt-get clean" or
       abort "[whalebuilder] E: unable to update image #{ARGV[0]}"
+    container = IO.read(File.join(dir, 'cid')).chomp
     if options[:reimport]
       r, w = IO.pipe
-      pid = spawn(*(make_docker_command "export", IO.read(File.join(dir, 'cid')).chomp,
+      pid = spawn(*(make_docker_command "export", container,
                                         :out => w))
       pid or abort "[whalebuilder] E: unable to spawn docker export"
       w.close
@@ -244,11 +250,10 @@ Usage: #{opts.program_name} [globalopts] update [options] <image name>"
       Process.wait pid
       $? == 0 or abort "[whalebuilder] E: error while exporting to docker import (code #{$?})"
     else
-      docker "commit", "#{IO.read(File.join(dir, 'cid')).chomp}", "#{ARGV[0]}" or
+      docker "commit", container, "#{ARGV[0]}" or
         abort "[whalebuilder] E: unable to commit modifications to #{ARGV[0]}"
     end
-    docker "rm", "#{IO.read(File.join(dir, 'cid')).chomp}", :out => "/dev/null" or
-      warn "[whalebuilder] W: unable to remove docker container #{IO.read(File.join(dir, 'cid')).chomp} (#{$?})"
+    docker_rm container
   end
 
 when 'build'
@@ -464,10 +469,25 @@ Usage: #{opts.program_name} [globalopts] build [options] [image name] <dsc file>
     end
     r.close
     # build the package
-    docker "run", "--user=whalebuilder", "--name=#{containername}",
+    docker "run", "-d", "-i",
+           "--name=#{containername}",
            "-v", "#{dir}/source:/home/whalebuilder/source:ro",
-           "--net=none", name, "/bin/bash", "/home/whalebuilder/source/build.sh" or
-      abort "[whalebuilder] E: docker run failed with error #{$?}"
+           "-w", "/build",
+           "--net=none", options[:image_name], "/bin/sh" or
+      abort "[whalebuilder] E: failed to start container with error #{$?}"
+    unless docker "exec", "--user=whalebuilder", containername,
+           "/bin/bash", "/home/whalebuilder/source/build.sh"
+      warn "[whalebuilder] E: docker run failed with error #{$?}"
+      print "Do you want to start a shell in the container? [Y/n] "
+      resp = ($stdin.readline.lstrip[0] || "Y").downcase
+      if resp == "n"
+        docker_rm "-f", containername
+      else
+        docker "exec", "--user=whalebuilder", "-i", "-t", containername, "/bin/bash"
+        docker_rm "-f", containername
+      end
+      abort
+    end
     r, w = IO.pipe
     pid = spawn(*(make_docker_command "cp", "#{containername}:/build/.", "-"), :out => w)
     pid or abort "[whalebuilder] E: docker cp failed with error #{$?}"
@@ -493,8 +513,7 @@ Usage: #{opts.program_name} [globalopts] build [options] [image name] <dsc file>
         warn out
       end
     end
-    docker "rm", containername, :out => "/dev/null" or
-      warn "[whalebuilder] W: unable to remove docker container #{containername} (#{$?})"
+    docker_rm "-f", containername
 
     # remove build dependency image if requested, and only if we created it in
     # the first place

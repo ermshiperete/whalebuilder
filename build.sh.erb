@@ -2,7 +2,6 @@
 
 set -eo pipefail
 
-cd /build
 dpkg-source -x ~/source/<%= @dscfilename %>
 builddir=$(echo */)
 cd ${builddir}
